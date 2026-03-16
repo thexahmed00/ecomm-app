@@ -29,6 +29,12 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
 
   const wishlisted = isWishlisted(product._id);
   const images = useMemo(() => product.images || [], [product.images]);
+  const active = images?.[activeImage];
+  const activeUrl = active?.url;
+  const normalizedActiveUrl =
+    activeUrl && !activeUrl.startsWith('http') && !activeUrl.startsWith('/')
+      ? `/${activeUrl}`
+      : activeUrl;
 
   const handleAddToCart = () => {
     addItem({
@@ -62,10 +68,10 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
         <div className="flex flex-col gap-4">
           <div className="relative aspect-square bg-gray-900 rounded-xl overflow-hidden border border-gray-800">
-            {images?.[activeImage]?.url ? (
-              hasCloudinary ? (
+            {normalizedActiveUrl ? (
+              hasCloudinary && active?.publicId ? (
                 <CldImage
-                  src={images[activeImage].url}
+                  src={active.publicId}
                   alt={product.name}
                   fill
                   className="object-cover cursor-zoom-in"
@@ -74,7 +80,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
                 />
               ) : (
                 <img
-                  src={images[activeImage].url}
+                  src={normalizedActiveUrl}
                   alt={product.name}
                   className="object-cover w-full h-full"
                   loading="lazy"
@@ -95,10 +101,15 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
                     idx === activeImage ? 'border-[#E8A020]' : 'border-transparent hover:border-gray-600'
                   }`}
                 >
-                  {hasCloudinary ? (
-                    <CldImage src={img.url} alt={`${product.name} ${idx + 1}`} fill className="object-cover" sizes="80px" />
+                  {hasCloudinary && img.publicId ? (
+                    <CldImage src={img.publicId} alt={`${product.name} ${idx + 1}`} fill className="object-cover" sizes="80px" />
                   ) : (
-                    <img src={img.url} alt={`${product.name} ${idx + 1}`} className="object-cover w-full h-full" loading="lazy" />
+                    <img
+                      src={!img.url.startsWith('http') && !img.url.startsWith('/') ? `/${img.url}` : img.url}
+                      alt={`${product.name} ${idx + 1}`}
+                      className="object-cover w-full h-full"
+                      loading="lazy"
+                    />
                   )}
                 </button>
               ))}

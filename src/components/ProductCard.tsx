@@ -16,7 +16,7 @@ interface ProductCardProps {
     slug: string;
     price: number;
     comparePrice?: number;
-    images: { url: string }[];
+    images: { url: string; publicId?: string }[];
     avgRating: number;
   };
 }
@@ -49,6 +49,13 @@ export default function ProductCard({ product }: ProductCardProps) {
     addToast(wishlisted ? 'Removed from wishlist' : 'Added to wishlist', 'info');
   };
 
+  const primaryImage = product.images?.[0];
+  const primaryImageUrl = primaryImage?.url;
+  const normalizedImageUrl =
+    primaryImageUrl && !primaryImageUrl.startsWith('http') && !primaryImageUrl.startsWith('/')
+      ? `/${primaryImageUrl}`
+      : primaryImageUrl;
+
   return (
     <Link href={`/shop/${product.slug}`} className="block group">
       <motion.div
@@ -63,10 +70,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         </button>
 
         <div className="relative aspect-square overflow-hidden bg-gray-900">
-          {product.images?.[0]?.url ? (
-            hasCloudinary ? (
+          {normalizedImageUrl ? (
+            hasCloudinary && primaryImage?.publicId ? (
               <CldImage
-                src={product.images[0].url}
+                src={primaryImage.publicId}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -74,7 +81,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               />
             ) : (
               <img
-                src={product.images[0].url}
+                src={normalizedImageUrl}
                 alt={product.name}
                 className="object-cover w-full h-full"
                 loading="lazy"
