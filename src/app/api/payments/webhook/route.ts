@@ -1,53 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
 import connectDB from '@/lib/mongodb';
 import Order from '@/models/Order';
-import type Stripe from 'stripe';
+import crypto from 'crypto';
+
+function timingSafeEqual(a: string, b: string) {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return crypto.timingSafeEqual(aBuf, bBuf);
+}
+
+type RazorpayWebhookEvent = {
+  event?: string;
+  payload?: {
+    payment?: { entity?: { order_id?: string; id?: string } };
+    order?: { entity?: { id?: string } };
+  };
+};
 
 export async function POST(req: NextRequest) {
   const payload = await req.text();
-  const signature = req.headers.get('stripe-signature');
-
-  type StripeEventLike = { type: string; data: { object: unknown } };
-  let event: Stripe.Event | StripeEventLike;
+  const signature = req.headers.get('x-razorpay-signature');
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
   try {
-    if (!process.env.STRIPE_WEBHOOK_SECRET) {
-      // If no webhook secret, just parse the payload (for testing without webhook signature validation)
-      event = JSON.parse(payload) as StripeEventLike;
-    } else {
+    if (webhookSecret) {
       if (!signature) {
-        return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+        return NextResponse.json({ error: 'Missing x-razorpay-signature header' }, { status: 400 });
       }
-      event = stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
+      const expected = crypto.createHmac('sha256', webhookSecret).update(payload).digest('hex');
+      if (!timingSafeEqual(expected, signature)) {
+        return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 });
+      }
     }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Webhook signature verification failed';
-    console.error('Webhook signature verification failed.', message);
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
 
-  try {
+    const event = JSON.parse(payload) as RazorpayWebhookEvent;
+
     await connectDB();
 
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      
-      // Update order status based on paymentIntent id
-      // Assuming we saved stripePaymentIntentId when creating the order, or passed orderId in metadata
-      const stripePaymentIntentId = paymentIntent.id;
-      
-      await Order.findOneAndUpdate(
-        { stripePaymentIntentId },
-        { 
-          paymentStatus: 'paid',
-          orderStatus: 'confirmed'
-        }
-      );
+    const type = event?.event;
+
+    if (type === 'payment.captured') {
+      const rpOrderId = event?.payload?.payment?.entity?.order_id;
+      const rpPaymentId = event?.payload?.payment?.entity?.id;
+
+      if (rpOrderId) {
+        await Order.findOneAndUpdate(
+          { razorpayOrderId: rpOrderId },
+          {
+            paymentStatus: 'paid',
+            orderStatus: 'confirmed',
+            razorpayPaymentId: rpPaymentId,
+          }
+        );
+      }
+    }
+
+    if (type === 'order.paid') {
+      const rpOrderId = event?.payload?.order?.entity?.id;
+      if (rpOrderId) {
+        await Order.findOneAndUpdate(
+          { razorpayOrderId: rpOrderId },
+          {
+            paymentStatus: 'paid',
+            orderStatus: 'confirmed',
+          }
+        );
+      }
     }
 
     return NextResponse.json({ received: true });

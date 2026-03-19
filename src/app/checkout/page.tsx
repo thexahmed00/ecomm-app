@@ -8,6 +8,53 @@ import { useAuth } from '@/hooks/useAuth';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
+type RazorpaySuccessResponse = {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+};
+
+type RazorpayOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  name?: string;
+  description?: string;
+  order_id: string;
+  prefill?: { name?: string; email?: string; contact?: string };
+  handler?: (response: RazorpaySuccessResponse) => void;
+  modal?: { ondismiss?: () => void };
+  theme?: { color?: string };
+};
+
+type RazorpayInstance = { open: () => void };
+type RazorpayConstructor = new (options: RazorpayOptions) => RazorpayInstance;
+
+declare global {
+  interface Window {
+    Razorpay?: RazorpayConstructor;
+  }
+}
+
+function loadRazorpayScript() {
+  return new Promise<void>((resolve, reject) => {
+    if (typeof window === 'undefined') return reject(new Error('Not in browser'));
+    if (window.Razorpay) return resolve();
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('Failed to load Razorpay')));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Razorpay'));
+    document.body.appendChild(script);
+  });
+}
+
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCartStore();
   const { mongoUser } = useAuthStore();
@@ -16,7 +63,18 @@ export default function CheckoutPage() {
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'razorpay'>('cod');
+
+  const nameParts = (mongoUser?.name || '').split(' ').filter(Boolean);
+  const [firstName, setFirstName] = useState(nameParts[0] || '');
+  const [lastName, setLastName] = useState(nameParts.slice(1).join(' ') || '');
+  const [line1, setLine1] = useState('123 Main St');
+  const [line2, setLine2] = useState('');
+  const [city, setCity] = useState('Mumbai');
+  const [stateName, setStateName] = useState('MH');
+  const [pincode, setPincode] = useState('400001');
+  const [country, setCountry] = useState('India');
+  const [phone, setPhone] = useState('');
 
   if (items.length === 0) {
     return (
@@ -35,16 +93,116 @@ export default function CheckoutPage() {
     
     setLoading(true);
     try {
-      // Simulate API call to create order
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      clearCart();
-      router.push('/checkout/success?orderId=ORD-' + Math.floor(Math.random() * 1000000));
+      const shippingAddress = {
+        name: `${firstName} ${lastName}`.trim() || mongoUser.name || mongoUser.email,
+        line1: line1.trim(),
+        line2: line2.trim() || undefined,
+        city: city.trim(),
+        state: stateName.trim(),
+        pincode: pincode.trim(),
+        country: country.trim() || 'India',
+        phone: phone.trim(),
+      };
+
+      if (!shippingAddress.line1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.pincode || !shippingAddress.phone) {
+        alert('Please fill all required shipping fields (address, city, state, pincode, phone).');
+        setLoading(false);
+        return;
+      }
+
+      const subtotal = totalPrice();
+      const shippingCost = 0;
+      const totalAmount = subtotal + shippingCost;
+
+      const orderPayload = {
+        items: items.map((item) => ({
+          product: item.product,
+          name: item.name,
+          image: item.image || '',
+          price: item.price,
+          quantity: item.quantity,
+          variant: item.selectedVariants,
+        })),
+        shippingAddress,
+        paymentMethod,
+        subtotal,
+        shippingCost,
+        discount: 0,
+        totalAmount,
+      };
+
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data?.error ? JSON.stringify(data.error) : 'Failed to place order';
+        throw new Error(msg);
+      }
+
+      if (paymentMethod === 'cod') {
+        clearCart();
+        router.push(`/checkout/success?orderId=${encodeURIComponent(data.orderNumber)}`);
+        return;
+      }
+
+      const order = data?.order;
+      const razorpay = data?.razorpay;
+      if (!order?._id || !razorpay?.keyId || !razorpay?.orderId) {
+        throw new Error('Missing Razorpay order details');
+      }
+
+      await loadRazorpayScript();
+      if (!window.Razorpay) throw new Error('Razorpay failed to initialize');
+
+      const rzp = new window.Razorpay({
+        key: razorpay.keyId,
+        amount: razorpay.amount,
+        currency: razorpay.currency,
+        name: 'Checkout',
+        description: `Order ${order.orderNumber}`,
+        order_id: razorpay.orderId,
+        prefill: {
+          name: shippingAddress.name,
+          email: mongoUser.email,
+          contact: shippingAddress.phone,
+        },
+        handler: async (response: RazorpaySuccessResponse) => {
+          try {
+            const verifyRes = await fetch(`/api/orders/${order._id}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(response),
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok) {
+              const msg = verifyData?.error ? JSON.stringify(verifyData.error) : 'Payment verification failed';
+              throw new Error(msg);
+            }
+            clearCart();
+            router.push(`/checkout/success?orderId=${encodeURIComponent(order.orderNumber)}`);
+          } catch (e) {
+            console.error(e);
+            alert('Payment succeeded but verification failed. Please contact support.');
+          } finally {
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => setLoading(false),
+        },
+        theme: { color: '#E8A020' },
+      });
+
+      rzp.open();
     } catch (error) {
       console.error(error);
       alert('Failed to place order');
     } finally {
-      setLoading(false);
+      if (paymentMethod === 'cod') setLoading(false);
     }
   };
 
@@ -104,14 +262,19 @@ export default function CheckoutPage() {
             {step === 2 && (
               <div className="pl-8 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <input type="text" placeholder="First Name" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" defaultValue={mongoUser?.name?.split(' ')[0] || ''} />
-                  <input type="text" placeholder="Last Name" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" defaultValue={mongoUser?.name?.split(' ')[1] || ''} />
+                  <input type="text" placeholder="First Name" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                  <input type="text" placeholder="Last Name" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
-                <input type="text" placeholder="Address Line 1" className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white" defaultValue="123 Main St" />
+                <input type="text" placeholder="Address Line 1" className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white" value={line1} onChange={(e) => setLine1(e.target.value)} />
+                <input type="text" placeholder="Address Line 2 (Optional)" className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white" value={line2} onChange={(e) => setLine2(e.target.value)} />
                 <div className="grid grid-cols-3 gap-4">
-                  <input type="text" placeholder="City" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" defaultValue="Mumbai" />
-                  <input type="text" placeholder="State" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" defaultValue="MH" />
-                  <input type="text" placeholder="PIN Code" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" defaultValue="400001" />
+                  <input type="text" placeholder="City" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" value={city} onChange={(e) => setCity(e.target.value)} />
+                  <input type="text" placeholder="State" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" value={stateName} onChange={(e) => setStateName(e.target.value)} />
+                  <input type="text" placeholder="PIN Code" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <input type="text" placeholder="Country" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" value={country} onChange={(e) => setCountry(e.target.value)} />
+                  <input type="text" placeholder="Phone" className="bg-gray-900 border border-gray-700 rounded p-2 text-white" value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </div>
                 <button 
                   onClick={() => setStep(3)}
@@ -138,22 +301,21 @@ export default function CheckoutPage() {
                     name="payment" 
                     value="cod" 
                     checked={paymentMethod === 'cod'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    onChange={(e) => setPaymentMethod(e.target.value as 'cod' | 'razorpay')}
                     className="accent-[#E8A020]"
                   />
                   <span className="text-white">Cash on Delivery</span>
                 </label>
-                <label className="flex items-center gap-3 p-4 border border-gray-700 rounded-md cursor-pointer hover:border-[#E8A020] opacity-50">
+                <label className="flex items-center gap-3 p-4 border border-gray-700 rounded-md cursor-pointer hover:border-[#E8A020]">
                   <input 
                     type="radio" 
                     name="payment" 
-                    value="stripe" 
-                    checked={paymentMethod === 'stripe'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    value="razorpay" 
+                    checked={paymentMethod === 'razorpay'}
+                    onChange={(e) => setPaymentMethod(e.target.value as 'cod' | 'razorpay')}
                     className="accent-[#E8A020]"
-                    disabled
                   />
-                  <span className="text-white">Credit Card (Stripe - Coming Soon)</span>
+                  <span className="text-white">Pay Online (Razorpay)</span>
                 </label>
                 
                 <button 

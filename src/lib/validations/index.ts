@@ -52,7 +52,7 @@ export const orderSchema = z.object({
     image: z.string(),
     price: z.number(),
     quantity: z.number().int().min(1),
-    variant: z.string().optional()
+    variant: z.record(z.string(), z.string()).optional()
   })).min(1),
   shippingAddress: z.object({
     name: z.string(),
@@ -64,10 +64,9 @@ export const orderSchema = z.object({
     country: z.string(),
     phone: z.string()
   }),
-  paymentMethod: z.enum(['stripe', 'cod']),
+  paymentMethod: z.enum(['razorpay', 'cod']),
   paymentStatus: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
   orderStatus: z.enum(['placed', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned']).optional(),
-  stripePaymentIntentId: z.string().optional(),
   subtotal: z.number(),
   shippingCost: z.number(),
   discount: z.number().optional(),

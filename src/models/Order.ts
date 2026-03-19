@@ -21,10 +21,12 @@ export interface IOrder extends Document {
     country: string;
     phone: string;
   };
-  paymentMethod: 'stripe' | 'cod';
+  paymentMethod: 'razorpay' | 'cod';
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   orderStatus: 'placed' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
-  stripePaymentIntentId?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
   subtotal: number;
   shippingCost: number;
   discount: number;
@@ -59,7 +61,7 @@ const OrderSchema: Schema = new Schema(
       country: String,
       phone: String,
     },
-    paymentMethod: { type: String, enum: ['stripe', 'cod'], required: true },
+    paymentMethod: { type: String, enum: ['razorpay', 'cod'], required: true },
     paymentStatus: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded'],
@@ -70,7 +72,9 @@ const OrderSchema: Schema = new Schema(
       enum: ['placed', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'],
       default: 'placed',
     },
-    stripePaymentIntentId: String,
+    razorpayOrderId: String,
+    razorpayPaymentId: String,
+    razorpaySignature: String,
     subtotal: Number,
     shippingCost: Number,
     discount: Number,
