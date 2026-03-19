@@ -22,7 +22,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const hasCloudinary = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const hasCloudinary = !!cloudName;
   const { addItem } = useCartStore();
   const { toggle, isWishlisted } = useWishlistStore();
   const { addToast } = useUIStore();
@@ -51,10 +52,16 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const primaryImage = product.images?.[0];
   const primaryImageUrl = primaryImage?.url;
+  const primaryPublicId = primaryImage?.publicId;
   const normalizedImageUrl =
     primaryImageUrl && !primaryImageUrl.startsWith('http') && !primaryImageUrl.startsWith('/')
       ? `/${primaryImageUrl}`
       : primaryImageUrl;
+  const canUseCldImage =
+    typeof primaryPublicId === 'string' &&
+    (typeof primaryImageUrl !== 'string' ||
+      primaryImageUrl.length === 0 ||
+      (hasCloudinary && primaryImageUrl.includes(`res.cloudinary.com/${cloudName}/`)));
 
   return (
     <Link href={`/shop/${product.slug}`} className="block group">
@@ -66,14 +73,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           onClick={handleToggleWishlist}
           className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/50 backdrop-blur-md text-gray-300 hover:text-[#E8A020] transition-colors"
         >
-          <Heart className={`w-5 h-5 ${wishlisted ? 'fill-[#E8A020] text-[#E8A020]' : ''}`} />
+          <Heart
+            className={`w-5 h-5 ${wishlisted ? 'fill-[#E8A020] text-[#E8A020]' : ''}`}
+            suppressHydrationWarning={true}
+          />
         </button>
 
         <div className="relative aspect-square overflow-hidden bg-gray-900">
           {normalizedImageUrl ? (
-            hasCloudinary && primaryImage?.publicId ? (
+            canUseCldImage ? (
               <CldImage
-                src={primaryImage.publicId}
+                src={primaryPublicId}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"

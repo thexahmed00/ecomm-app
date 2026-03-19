@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import connectDB from '@/lib/mongodb';
 import { Product } from '@/models/Product';
+import '@/models/Category';
 import ProductDetailClient from '@/components/ProductDetailClient';
 import type { ProductDetail, ProductSummary } from '@/types';
 

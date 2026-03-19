@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { Product } from '@/models/Product';
+import '@/models/Category';
+import '@/models/Review';
+import '@/models/User';
 import { redis, cache, CACHE_TTL } from '@/lib/redis';
 import { requireAdmin } from '@/lib/authMiddleware';
 import { productSchema } from '@/lib/validations';

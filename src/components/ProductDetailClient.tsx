@@ -18,7 +18,8 @@ type Props = {
 };
 
 export default function ProductDetailClient({ product, relatedProducts }: Props) {
-  const hasCloudinary = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const hasCloudinary = !!cloudName;
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews' | 'shipping'>('description');
@@ -31,10 +32,16 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
   const images = useMemo(() => product.images || [], [product.images]);
   const active = images?.[activeImage];
   const activeUrl = active?.url;
+  const activePublicId = active?.publicId;
   const normalizedActiveUrl =
     activeUrl && !activeUrl.startsWith('http') && !activeUrl.startsWith('/')
       ? `/${activeUrl}`
       : activeUrl;
+  const canUseActiveCldImage =
+    typeof activePublicId === 'string' &&
+    (typeof activeUrl !== 'string' ||
+      activeUrl.length === 0 ||
+      (hasCloudinary && activeUrl.includes(`res.cloudinary.com/${cloudName}/`)));
 
   const handleAddToCart = () => {
     addItem({
@@ -69,9 +76,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
         <div className="flex flex-col gap-4">
           <div className="relative aspect-square bg-gray-900 rounded-xl overflow-hidden border border-gray-800">
             {normalizedActiveUrl ? (
-              hasCloudinary && active?.publicId ? (
+              canUseActiveCldImage ? (
                 <CldImage
-                  src={active.publicId}
+                  src={activePublicId}
                   alt={product.name}
                   fill
                   className="object-cover cursor-zoom-in"
@@ -101,7 +108,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
                     idx === activeImage ? 'border-[#E8A020]' : 'border-transparent hover:border-gray-600'
                   }`}
                 >
-                  {hasCloudinary && img.publicId ? (
+                  {hasCloudinary && img.publicId && img.url.includes(`res.cloudinary.com/${cloudName}/`) ? (
                     <CldImage src={img.publicId} alt={`${product.name} ${idx + 1}`} fill className="object-cover" sizes="80px" />
                   ) : (
                     <img
@@ -180,7 +187,10 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
                     : 'border-gray-700 bg-[#0F0F0F] text-gray-400 hover:border-gray-500'
                 }`}
               >
-                <Heart className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} />
+                <Heart
+                  className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`}
+                  suppressHydrationWarning={true}
+                />
               </button>
             </div>
           </div>
