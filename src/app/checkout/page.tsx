@@ -224,7 +224,7 @@ export default function CheckoutPage() {
 
       <div className="mt-10 flex flex-col lg:flex-row gap-12">
         <div className="flex-1">
-          <div className="flex items-center gap-6 border-b border-[#d0c5af] pb-6">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-[#d0c5af] pb-6">
             {[
               { n: 1, label: 'Shipping' },
               { n: 2, label: 'Delivery' },

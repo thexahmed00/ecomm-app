@@ -113,7 +113,7 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div className="w-full lg:w-80 flex-shrink-0">
-          <div className="bg-[#ffffff] border border-[#d0c5af] p-8 sticky top-24 mt-10">
+          <div className="bg-[#ffffff] border border-[#d0c5af] p-8 lg:sticky lg:top-24 mt-10">
             <h2 className="text-xs tracking-[0.24em] uppercase text-[#1c1c18]">Order Summary</h2>
             
             <div className="mt-6 space-y-3 mb-6 text-sm">

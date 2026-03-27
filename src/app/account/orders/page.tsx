@@ -61,43 +61,77 @@ export default function AccountOrders() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#fcf9f3] text-[#7f7663] text-xs tracking-[0.24em] uppercase border-b border-[#d0c5af]">
-                <th className="p-4 font-medium">Order ID</th>
-                <th className="p-4 font-medium">Date</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium">Total</th>
-                <th className="p-4 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#d0c5af] text-sm">
-              {orders.map((order) => (
-                <tr key={order._id} className="hover:bg-[#f6f3ed] transition-colors">
-                  <td className="p-4 font-mono text-[#1c1c18]">{order.orderNumber}</td>
-                  <td className="p-4 text-[#4d4635]">
-                    {new Date(order.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric', month: 'short', day: 'numeric'
-                    })}
-                  </td>
-                  <td className="p-4">
-                    <OrderStatusBadge status={order.orderStatus} />
-                  </td>
-                  <td className="p-4 font-medium text-[#1c1c18]">₹{order.totalAmount}</td>
-                  <td className="p-4 text-right">
-                    <Link 
-                      href={`/account/orders/${order._id}`}
-                      className="inline-flex items-center gap-2 text-xs tracking-[0.24em] uppercase text-[#1c1c18] underline underline-offset-8 decoration-[#d4af37]"
-                    >
-                      <Eye className="w-4 h-4" /> View
-                    </Link>
-                  </td>
+        <>
+          <div className="md:hidden p-6 space-y-4">
+            {orders.map((order) => (
+              <div key={order._id} className="border border-[#d0c5af] bg-[#fcf9f3] p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs tracking-[0.24em] uppercase text-[#7f7663]">Order</p>
+                    <p className="mt-2 font-mono text-sm text-[#1c1c18] truncate">{order.orderNumber}</p>
+                    <p className="mt-2 text-sm text-[#4d4635]">
+                      {new Date(order.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  <OrderStatusBadge status={order.orderStatus} />
+                </div>
+
+                <div className="mt-4 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs tracking-[0.24em] uppercase text-[#7f7663]">Total</p>
+                    <p className="mt-2 font-medium text-[#1c1c18]">₹{order.totalAmount}</p>
+                  </div>
+                  <Link
+                    href={`/account/orders/${order._id}`}
+                    className="inline-flex items-center gap-2 text-xs tracking-[0.24em] uppercase text-[#1c1c18] underline underline-offset-8 decoration-[#d4af37]"
+                  >
+                    <Eye className="w-4 h-4" /> View
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#fcf9f3] text-[#7f7663] text-xs tracking-[0.24em] uppercase border-b border-[#d0c5af]">
+                  <th className="p-4 font-medium">Order ID</th>
+                  <th className="p-4 font-medium">Date</th>
+                  <th className="p-4 font-medium">Status</th>
+                  <th className="p-4 font-medium">Total</th>
+                  <th className="p-4 font-medium text-right">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#d0c5af] text-sm">
+                {orders.map((order) => (
+                  <tr key={order._id} className="hover:bg-[#f6f3ed] transition-colors">
+                    <td className="p-4 font-mono text-[#1c1c18]">{order.orderNumber}</td>
+                    <td className="p-4 text-[#4d4635]">
+                      {new Date(order.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                      })}
+                    </td>
+                    <td className="p-4">
+                      <OrderStatusBadge status={order.orderStatus} />
+                    </td>
+                    <td className="p-4 font-medium text-[#1c1c18]">₹{order.totalAmount}</td>
+                    <td className="p-4 text-right">
+                      <Link 
+                        href={`/account/orders/${order._id}`}
+                        className="inline-flex items-center gap-2 text-xs tracking-[0.24em] uppercase text-[#1c1c18] underline underline-offset-8 decoration-[#d4af37]"
+                      >
+                        <Eye className="w-4 h-4" /> View
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

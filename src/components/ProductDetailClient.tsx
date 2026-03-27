@@ -210,45 +210,47 @@ export default function ProductDetailClient({ product, relatedProducts }: Props)
           ) : null}
 
           <div className="mt-12 border-t border-[#d0c5af] pt-8">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center border border-[#d0c5af] bg-[#fcf9f3]">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center justify-between sm:justify-start gap-4">
+                <div className="flex items-center border border-[#d0c5af] bg-[#fcf9f3]">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="p-3 text-[#4d4635] hover:text-[#1c1c18] transition-colors"
+                    aria-label="Decrease quantity"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="w-12 text-center text-sm">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity((q) => Math.min(product.stock || q + 1, q + 1))}
+                    className="p-3 text-[#4d4635] hover:text-[#1c1c18] transition-colors"
+                    aria-label="Increase quantity"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+
                 <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="p-3 text-[#4d4635] hover:text-[#1c1c18] transition-colors"
-                  aria-label="Decrease quantity"
+                  onClick={() => {
+                    toggle(product._id);
+                    addToast(wishlisted ? 'Removed from wishlist' : 'Added to wishlist', 'info');
+                  }}
+                  className={`p-3 border transition-colors flex items-center justify-center ${
+                    wishlisted ? 'border-[#d4af37] bg-[#fcf9f3] text-[#d4af37]' : 'border-[#d0c5af] bg-[#fcf9f3] text-[#4d4635] hover:text-[#1c1c18]'
+                  }`}
+                  aria-label="Toggle wishlist"
                 >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-12 text-center text-sm">{quantity}</span>
-                <button
-                  onClick={() => setQuantity((q) => Math.min(product.stock || q + 1, q + 1))}
-                  className="p-3 text-[#4d4635] hover:text-[#1c1c18] transition-colors"
-                  aria-label="Increase quantity"
-                >
-                  <Plus className="w-4 h-4" />
+                  <Heart className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} suppressHydrationWarning={true} />
                 </button>
               </div>
 
               <button
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
-                className="flex-1 bg-[#d4af37] text-[#1c1c18] text-xs tracking-[0.24em] uppercase font-medium py-4 px-8 flex items-center justify-center gap-3 hover:bg-[#c29a30] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:flex-1 bg-[#d4af37] text-[#1c1c18] text-xs tracking-[0.24em] uppercase font-medium py-4 px-8 flex items-center justify-center gap-3 hover:bg-[#c29a30] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ShoppingCart className="w-5 h-5" />
                 Add to Bag
-              </button>
-
-              <button
-                onClick={() => {
-                  toggle(product._id);
-                  addToast(wishlisted ? 'Removed from wishlist' : 'Added to wishlist', 'info');
-                }}
-                className={`p-3 border transition-colors flex items-center justify-center ${
-                  wishlisted ? 'border-[#d4af37] bg-[#fcf9f3] text-[#d4af37]' : 'border-[#d0c5af] bg-[#fcf9f3] text-[#4d4635] hover:text-[#1c1c18]'
-                }`}
-                aria-label="Toggle wishlist"
-              >
-                <Heart className={`w-5 h-5 ${wishlisted ? 'fill-current' : ''}`} suppressHydrationWarning={true} />
               </button>
             </div>
 

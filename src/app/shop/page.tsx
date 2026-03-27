@@ -100,6 +100,7 @@ function ShopContent() {
         {/* Sidebar Filters */}
         <div className={`
           fixed inset-0 z-50 bg-[#fcf9f3] p-6 md:static md:bg-transparent md:p-0 md:z-auto md:w-64 flex-shrink-0 transition-transform duration-300
+          overflow-y-auto md:overflow-visible
           ${showFilters ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
           <div className="flex justify-between items-center md:hidden mb-6">
