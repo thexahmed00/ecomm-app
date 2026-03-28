@@ -17,7 +17,7 @@ export async function verifyToken(req: NextRequest): Promise<DecodedIdToken | nu
   if (!token) return null;
 
   try {
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const projectId = process.env.FIREBASE_PROJECT_ID ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     if (!projectId) return null;
 
     const { payload } = await jwtVerify(token, JWKS, {

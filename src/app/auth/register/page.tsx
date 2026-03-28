@@ -8,7 +8,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 export default function Register() {
-  const { mongoUser } = useAuthStore();
+  const { firebaseUser, mongoUser } = useAuthStore();
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,10 +17,10 @@ export default function Register() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (mongoUser) {
+    if (firebaseUser || mongoUser) {
       router.push('/');
     }
-  }, [mongoUser, router]);
+  }, [firebaseUser, mongoUser, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +34,11 @@ export default function Register() {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (cred.user && name) {
         await updateProfile(cred.user, { displayName: name });
+      }
+      const token = await auth.currentUser?.getIdToken();
+      if (token) {
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `firebaseToken=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
       }
       router.push('/');
     } catch (err: unknown) {

@@ -8,7 +8,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 function LoginContent() {
-  const { mongoUser } = useAuthStore();
+  const { firebaseUser, mongoUser } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
@@ -18,10 +18,10 @@ function LoginContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (mongoUser) {
+    if (firebaseUser || mongoUser) {
       router.push(redirect);
     }
-  }, [mongoUser, router, redirect]);
+  }, [firebaseUser, mongoUser, router, redirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +33,11 @@ function LoginContent() {
     setSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      const token = await auth.currentUser?.getIdToken();
+      if (token) {
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `firebaseToken=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
+      }
       router.push(redirect);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to sign in';

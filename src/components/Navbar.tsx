@@ -109,7 +109,7 @@ export default function Navbar() {
                 <Link href="/shop?category=gifts" className={linkClass(pathname === '/shop' && category === 'gifts')}>
                   GIFTS
                 </Link>
-                <Link href="/about" className={linkClass(pathname.startsWith('/about'))}>
+                <Link href="/#about" className={linkClass(false)}>
                   ABOUT
                 </Link>
               </div>
@@ -174,7 +174,7 @@ export default function Navbar() {
           <Link href="/shop" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 text-sm tracking-[0.16em] uppercase text-[#4d4635] hover:text-[#1c1c18]">Collections</Link>
           <Link href="/shop?category=jewelry" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 text-sm tracking-[0.16em] uppercase text-[#4d4635] hover:text-[#1c1c18]">Jewelry</Link>
           <Link href="/shop?category=gifts" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 text-sm tracking-[0.16em] uppercase text-[#4d4635] hover:text-[#1c1c18]">Gifts</Link>
-          <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 text-sm tracking-[0.16em] uppercase text-[#4d4635] hover:text-[#1c1c18]">About</Link>
+          <Link href="/#about" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 text-sm tracking-[0.16em] uppercase text-[#4d4635] hover:text-[#1c1c18]">About</Link>
           
           {!loading && (
             <>

@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     const token = authHeader.split('Bearer ')[1];
 
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const projectId = process.env.FIREBASE_PROJECT_ID ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     if (!projectId) {
       return NextResponse.json({ error: 'Auth not configured' }, { status: 500 });
     }

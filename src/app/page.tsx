@@ -80,7 +80,7 @@ export default function Home() {
                   Shop Collection
                 </Link>
                 <Link
-                  href="/craft"
+                  href="/#about"
                   className="inline-flex items-center justify-center px-12 py-4 border border-[#ffffff] text-[#ffffff] text-[11px] tracking-[0.2em] uppercase hover:bg-[#ffffff]/10 transition-colors"
                 >
                   Discover Craft
@@ -223,7 +223,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="w-full bg-[#fcf9f3] border-t border-[#d0c5af]">
+      <section id="about" className="w-full bg-[#fcf9f3] border-t border-[#d0c5af] scroll-mt-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-7 relative">
@@ -240,7 +240,7 @@ export default function Home() {
 
               <div className="absolute bottom-6 right-6">
                 <Link
-                  href="/about"
+                  href="/#about"
                   className="inline-flex items-center gap-4 px-6 py-4 bg-[#ffffff] text-[#1c1c18] text-[10px] tracking-[0.22em] uppercase border border-[#d0c5af] hover:bg-[#f6f3ed] transition-colors shadow-sm"
                 >
                   <span className="h-9 w-9 border border-[#d0c5af] flex items-center justify-center">
@@ -265,7 +265,7 @@ export default function Home() {
                 hand-polish, every step is a testament to the pursuit of perfection.
               </p>
               <Link
-                href="/about"
+                href="/#about"
                 className="mt-10 inline-flex text-[11px] tracking-[0.24em] uppercase text-[#1c1c18] border-b border-[#1c1c18] pb-2 hover:border-[#d4af37] hover:text-[#1c1c18] transition-colors"
               >
                 DISCOVER OUR HISTORY
