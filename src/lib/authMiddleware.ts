@@ -64,6 +64,22 @@ export function requireAuth<C extends Record<string, unknown>>(
 export function requireAdmin<C extends Record<string, unknown>>(
   handler: RouteHandler<WithAuth<C>>
 ): RouteHandler<C> {
+  return requireRole(handler, ['admin']);
+}
+
+export function requireVendor<C extends Record<string, unknown>>(
+  handler: RouteHandler<WithAuth<C>>
+): RouteHandler<C> {
+  return requireRole(handler, ['vendor']);
+}
+
+
+
+//single function to check for both admin and vendor access
+export function requireRole<C extends Record<string, unknown>>(
+  handler: RouteHandler<WithAuth<C>>,
+  allowedRoles: ('admin' | 'vendor')[]
+): RouteHandler<C> {
   return async (req: NextRequest, context: C) => {
     const decodedToken = await verifyToken(req);
     if (!decodedToken) {
@@ -72,8 +88,8 @@ export function requireAdmin<C extends Record<string, unknown>>(
 
     await connectDB();
     const user = await User.findOne({ firebaseUid: decodedToken.uid }).lean();
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    if (!user || !allowedRoles.includes(user.role)) {
+      return NextResponse.json({ error: 'Forbidden: Access denied' }, { status: 403 });
     }
 
     return handler(req, { ...context, auth: decodedToken } as WithAuth<C>);
