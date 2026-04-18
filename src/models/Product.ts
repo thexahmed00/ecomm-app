@@ -18,6 +18,11 @@ export interface IProduct extends Document {
     name: string;
     options: string[];
   }[];
+  vendor: {
+    type: mongoose.Types.ObjectId;
+    ref: 'User';
+    default: null;
+  };
   stock: number;
   sku: string;
   reviews: mongoose.Types.ObjectId[];
