@@ -55,9 +55,26 @@ export type MongoUser = {
   name: string;
   email: string;
   avatar?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'vendor';
   addresses?: Address[];
   wishlist?: string[];
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type VendorApplicationStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
+                                                                                                                                                                                                                                                                             
+export type VendorProfileSummary = {
+    _id: string;                                                                                                                                                                                                                                                             
+    user: string;                                       
+    storeName: string;                                                                                                                                                                                                                                                       
+    storeSlug: string;
+    logo?: { url: string; publicId: string };                                                                                                                                                                                                                                
+    banner?: { url: string; publicId: string };         
+    bio: string;                                                                                                                                                                                                                                                             
+    socialLinks?: { instagram?: string; twitter?: string; website?: string };
+    applicationStatus: VendorApplicationStatus;                                                                                                                                                                                                                              
+    isActive: boolean;                  
+    createdAt: string;                
+};                                                                                                                                                                                                                                                                         
+                     
