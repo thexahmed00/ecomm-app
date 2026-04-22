@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinary';
-import { requireAuth, requireAdmin } from '@/lib/authMiddleware';
+import { requireAuth, requireAdmin ,requireVendor} from '@/lib/authMiddleware';
 import { User } from '@/models/User';
 import connectDB from '@/lib/mongodb';
 
@@ -29,11 +29,16 @@ export const POST = requireAuth(async (req: NextRequest, context) => {
       return NextResponse.json({ error: 'File size exceeds 5MB' }, { status: 400 });
     }
 
-    // Admin only for product/category images
-    if (['products', 'categories'].includes(folder) && user.role !== 'admin') {
+    // Admin only for product
+    if (['products', 'vendors'].includes(folder) && user.role !== 'admin' && user.role !== 'vendor') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    if(['categories'].includes(folder) && user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    
     // We need to convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);

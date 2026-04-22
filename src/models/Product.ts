@@ -13,11 +13,17 @@ export interface IProduct extends Document {
     alt?: string;
   }[];
   category: mongoose.Types.ObjectId;
+  vendor?: mongoose.Types.ObjectId | null;
   tags: string[];
   variants: {
     name: string;
     options: string[];
   }[];
+  vendor: {
+    type: mongoose.Types.ObjectId;
+    ref: 'User';
+    default: null;
+  };
   stock: number;
   sku: string;
   reviews: mongoose.Types.ObjectId[];
@@ -45,6 +51,11 @@ const ProductSchema: Schema = new Schema(
       },
     ],
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+    vendor: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
     tags: [String],
     variants: [
       {

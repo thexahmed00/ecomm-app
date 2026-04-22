@@ -9,7 +9,9 @@ export interface IOrder extends Document {
     image: string;
     price: number;
     quantity: number;
-    variant?: Record<string, string>;
+    variant?: Record<string, string>; 
+    vendor?: mongoose.Types.ObjectId;
+    vendorEarnings?: number; 
   }[];
   shippingAddress: {
     name: string;
