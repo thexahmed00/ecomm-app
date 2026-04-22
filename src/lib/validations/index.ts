@@ -91,3 +91,43 @@ export const reviewSchema = z.object({
     publicId: z.string()
   })).optional()
 });
+
+// Vendor Validations
+export const vendorApplicationSchema = z.object({
+  storeName: z.string().min(2).max(60),
+  storeSlug: z
+    .string()
+    .min(2)
+    .max(40)
+    .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  bio: z.string().min(20).max(500),
+});
+
+export const vendorProfileSchema = z.object({
+  storeName: z.string().min(2).max(60),
+  storeSlug: z
+    .string()
+    .min(2)
+    .max(40)
+    .regex(/^[a-z0-9-]+$/),
+  bio: z.string().max(500).optional(),
+  socialLinks: z
+    .object({
+      instagram: z.string().url().optional().or(z.literal('')),
+      twitter: z.string().url().optional().or(z.literal('')),
+      website: z.string().url().optional().or(z.literal('')),
+    })
+    .optional(),
+});
+
+export const vendorReviewSchema = z.object({
+  status: z.enum(['approved', 'rejected', 'suspended']),
+  applicationNote: z.string().max(500).optional(),
+  commissionRate: z.number().min(0).max(1).optional(),
+});
+
+export const platformSettingsSchema = z.object({
+  commissionRate: z.number().min(0).max(1),
+  vendorRegistrationOpen: z.boolean(),
+  maintenanceMode: z.boolean(),
+});
