@@ -8,11 +8,24 @@ import { ChevronLeft, ChevronRight, Play, Sparkles } from 'lucide-react';
 import { CldImage } from 'next-cloudinary';
 import { ProductGridSkeleton } from '@/components/Skeleton';
 import type { ProductSummary } from '@/types';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const { firebaseUser, mongoUser } = useAuthStore();
   const carouselRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+
+  useEffect(() => { 
+    if (mongoUser?.role === 'vendor') {
+      router.push('/vendor/dashboard');
+    } else if (firebaseUser || mongoUser) { 
+      router.push('/');
+    }
+  }, [firebaseUser, mongoUser, router]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
@@ -36,6 +49,8 @@ export default function Home() {
     }
     fetchFeatured();
   }, []);
+
+  if (mongoUser?.role === 'vendor') return null;
 
   return (
     <div className="flex flex-col">

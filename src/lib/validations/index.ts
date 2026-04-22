@@ -131,3 +131,7 @@ export const platformSettingsSchema = z.object({
   vendorRegistrationOpen: z.boolean(),
   maintenanceMode: z.boolean(),
 });
+
+export const vendorSuspendSchema = z.object({
+  isActive: z.boolean(),
+});
