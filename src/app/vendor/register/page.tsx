@@ -22,9 +22,7 @@ export default function Page() {
   useEffect(() => {
     if (mongoUser?.role === 'vendor') {
       router.push('/vendor/dashboard');
-    } else if (firebaseUser || mongoUser) {
-      router.push('/');
-    }
+    } 
   }, [firebaseUser, mongoUser, router]);
 
   const handleStoreNameChange = (val: string) => {
@@ -41,11 +39,15 @@ export default function Page() {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: name });
 
-      const token = await auth.currentUser?.getIdToken();
-      if (token) {
-        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-        document.cookie = `firebaseToken=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
-      }
+      // const token = await auth.currentUser?.getIdToken();
+      // if (token) {
+      //   const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      //   document.cookie = `firebaseToken=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
+      // }
+
+       const token = await cred.user.getIdToken();
+       const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+       document.cookie = `firebaseToken=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
 
       // Sync Firebase user to MongoDB first — vendor registration depends on this
       const syncRes = await fetch('/api/auth/sync', {
