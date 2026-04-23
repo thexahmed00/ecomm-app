@@ -1,40 +1,47 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import { requireAdmin } from '@/lib/authMiddleware';
-import PlatformSettings from '@/models/PlatformSettings';
-import { platformSettingsSchema } from '@/lib/validations';
-import { redis } from '@/lib/redis';
+import { NextRequest, NextResponse } from "next/server";
 
-const SETTINGS_CACHE_KEY = 'platform_settings';
+import connectDB from "@/lib/mongodb";
+import { requireAdmin } from "@/lib/authMiddleware";
+import PlatformSettings from "@/models/PlatformSettings";
+import { redis } from "@/lib/redis";
 
-export const GET = requireAdmin(async (_req: NextRequest) => {
+
+//get and patch platform settings
+export const GET = requireAdmin(async (req: NextRequest) => {
   await connectDB();
 
-  const cached = await redis.get(SETTINGS_CACHE_KEY);
-  if (cached) return NextResponse.json(cached);
-
-  let settings = await PlatformSettings.findOne({ key: 'global' }).lean();
-  if (!settings) {
-    settings = await PlatformSettings.create({ key: 'global' });
+  // Try to get settings from Redis cache
+  const cachedSettings = await redis.get("platform_settings");
+  if (cachedSettings) {
+    return NextResponse.json(cachedSettings);
   }
 
-  await redis.set(SETTINGS_CACHE_KEY, settings, { ex: 3600 });
+  // If not in cache, fetch from database
+  let settings = await PlatformSettings.findOne({ key: "global" }).lean();
+
+  if (!settings) {
+    settings = await PlatformSettings.create({ key: "global" });
+  }
+
+  await redis.set("platform_settings", settings, { ex: 3600 });
+
   return NextResponse.json(settings);
 });
 
 export const PATCH = requireAdmin(async (req: NextRequest) => {
   await connectDB();
 
-  const body = await req.json();
-  const parsed = platformSettingsSchema.partial().safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const settings = await PlatformSettings.findOneAndUpdate(
-    { key: 'global' },
-    { $set: parsed.data },
-    { upsert: true, new: true }
+  const data = await req.json();
+  
+  // Update the platform settings document
+  const updatedSettings = await PlatformSettings.findOneAndUpdate(
+    { key: "global" },
+    { $set: data },
+    { new: true, upsert: true }
   ).lean();
 
-  await redis.del(SETTINGS_CACHE_KEY);
-  return NextResponse.json(settings);
+  // Update the cache with the new settings
+  await redis.set("platform_settings", updatedSettings, { ex: 3600 });
+
+  return NextResponse.json(updatedSettings);
 });

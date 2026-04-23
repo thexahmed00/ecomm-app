@@ -62,19 +62,18 @@ export type MongoUser = {
   updatedAt?: string;
 };
 
-export type VendorApplicationStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
-                                                                                                                                                                                                                                                                             
 export type VendorProfileSummary = {
-    _id: string;                                                                                                                                                                                                                                                             
-    user: string;                                       
-    storeName: string;                                                                                                                                                                                                                                                       
-    storeSlug: string;
-    logo?: { url: string; publicId: string };                                                                                                                                                                                                                                
-    banner?: { url: string; publicId: string };         
-    bio: string;                                                                                                                                                                                                                                                             
-    socialLinks?: { instagram?: string; twitter?: string; website?: string };
-    applicationStatus: VendorApplicationStatus;                                                                                                                                                                                                                              
-    isActive: boolean;                  
-    createdAt: string;                
+  _id: string;
+  user: string;
+  storeName: string;
+  storeSlug: string;
+  logo?: { url: string; publicId: string };
+  banner?: { url: string; publicId: string };
+  bio: string;
+  socialLinks?: { instagram?: string; twitter?: string; website?: string };
+  totalEarnings: number;
+  pendingPayout: number;
+  isActive: boolean;
+  createdAt: string;
 };                                                                                                                                                                                                                                                                         
                      

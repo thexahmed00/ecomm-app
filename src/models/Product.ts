@@ -19,6 +19,7 @@ export interface IProduct extends Document {
     name: string;
     options: string[];
   }[];
+  vendor?: mongoose.Types.ObjectId | null;
   stock: number;
   sku: string;
   reviews: mongoose.Types.ObjectId[];
@@ -58,6 +59,7 @@ const ProductSchema: Schema = new Schema(
         options: [String],
       },
     ],
+    vendor: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     stock: { type: Number, default: 0 },
     sku: { type: String, required: true, unique: true },
     reviews: [{ type: Schema.Types.ObjectId, ref: 'Review' }],

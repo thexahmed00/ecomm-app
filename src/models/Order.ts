@@ -51,6 +51,8 @@ const OrderSchema: Schema = new Schema(
         price: Number,
         quantity: Number,
         variant: { type: Map, of: String },
+        vendor: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+        vendorEarnings: { type: Number, default: 0 },
       },
     ],
     shippingAddress: {

@@ -80,6 +80,33 @@ export const updateOrderSchema = z.object({
   paymentStatus: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
 });
 
+// Platform Settings Validations
+export const platformSettingsSchema = z.object({
+  commissionRate: z.number().min(0).max(1),
+  vendorRegistrationOpen: z.boolean(),
+  maintenanceMode: z.boolean(),
+});
+
+export const vendorRegistrationSchema = z.object({
+  storeName: z.string().min(2, 'Store name must be at least 2 characters'),
+  storeSlug: z.string().regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  bio: z.string().min(20, 'Bio must be at least 20 characters'),
+});
+
+export const vendorProfileUpdateSchema = z.object({
+  storeName: z.string().min(2, 'Store name must be at least 2 characters').optional(),
+  bio: z.string().min(20, 'Bio must be at least 20 characters').optional(),
+  socialLinks: z.object({
+    instagram: z.string().url().optional(),
+    twitter: z.string().url().optional(),
+    website: z.string().url().optional(),
+  }).optional(),
+});
+
+export const vendorSuspendSchema = z.object({
+  isActive: z.boolean(),
+});
+
 // Review Validations
 export const reviewSchema = z.object({
   product: z.string(),
