@@ -23,10 +23,27 @@ export const POST = requireAuth(async (req: NextRequest, { auth }) => {
   const existingProfile = await VendorProfile.findOne({ user: user._id });
   if (existingProfile) return NextResponse.json({ error: 'Already registered as vendor' }, { status: 409 });
 
-  const [profile] = await Promise.all([
-    VendorProfile.create({ user: user._id, storeName, storeSlug, bio }),
-    User.findByIdAndUpdate(user._id, { role: 'vendor' }),
-  ]);
+  // const [profile] = await Promise.all([
+  //   VendorProfile.create({ user: user._id, storeName, storeSlug, bio }),
+  //   User.findByIdAndUpdate(user._id, { role: 'vendor' }),
+  // ]);
+
+  const session = await VendorProfile.db.startSession();
+  const [profile] = await session.withTransaction(async () => {
+  const [createdProfile] = await VendorProfile.create(
+      [{ user: user._id, storeName, storeSlug, bio }],
+      { session }
+    );
+
+    await User.findByIdAndUpdate(
+      user._id,
+      { $set: { role: 'vendor' } },
+      { session, runValidators: true }
+    );
+
+    return [createdProfile];
+  });
+  await session.endSession();
 
   return NextResponse.json({ profile }, { status: 201 });
 });

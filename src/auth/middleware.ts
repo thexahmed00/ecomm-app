@@ -12,8 +12,10 @@ export async function middleware(request: NextRequest) {
   // Protect specific routes
   const isProtected = pathname.startsWith('/account') || 
                       pathname.startsWith('/admin') || 
+                      pathname.startsWith('/vendor') ||
                       pathname.startsWith('/checkout') || 
-                      pathname.startsWith('/wishlist');
+                      pathname.startsWith('/wishlist'); 
+
 
   if (!isProtected) {
     return NextResponse.next();
