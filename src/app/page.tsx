@@ -8,11 +8,24 @@ import { ChevronLeft, ChevronRight, Play, Sparkles } from 'lucide-react';
 import { CldImage } from 'next-cloudinary';
 import { ProductGridSkeleton } from '@/components/Skeleton';
 import type { ProductSummary } from '@/types';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const { firebaseUser, mongoUser } = useAuthStore();
   const carouselRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+
+  useEffect(() => { 
+    if (mongoUser?.role === 'vendor') {
+      router.push('/vendor/dashboard');
+    } else if (firebaseUser || mongoUser) { 
+      router.push('/');
+    }
+  }, [firebaseUser, mongoUser, router]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (carouselRef.current) {
@@ -36,6 +49,8 @@ export default function Home() {
     }
     fetchFeatured();
   }, []);
+
+  if (mongoUser?.role === 'vendor') return null;
 
   return (
     <div className="flex flex-col">
@@ -274,6 +289,25 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* become a seller */}
+        <section className="w-full bg-[#fcf9f3] border-t border-[#d0c5af] scroll-mt-28">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
+          <h2 className="mt-6 font-playfair text-5xl md:text-6xl leading-[0.95] text-[#1c1c18] text-center">
+                  Become a <span className="italic">Seller.</span>
+                </h2>
+                <Link
+                  href="/vendor/register"
+                  className="mt-10 flex w-fit text-[11px] tracking-[0.24em] uppercase text-[#1c1c18] border-b border-[#1c1c18] pb-2 hover:border-[#d4af37] hover:text-[#1c1c18] transition-colors mx-auto"
+                >
+                    Join Us
+                </Link>
+
+              </div>
+       
+        
+      </section>
+
 
       <section className="w-full bg-[#0b0a0d]">
         <div className="grid grid-cols-3">

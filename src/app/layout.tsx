@@ -43,7 +43,10 @@ export default function RootLayout({
           <Navbar />
         </Suspense>
         <main className="flex-1 flex flex-col">
-          <PageTransition>{children}</PageTransition>
+          {/* /add transition only two initial screen  */}
+          {/* <PageTransition> */}
+            {children}
+          {/* </PageTransition> */}
         </main>
         <CartDrawer />
         <SearchModal />
