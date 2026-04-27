@@ -19,9 +19,11 @@ export interface IProduct extends Document {
     name: string;
     options: string[];
   }[];
-  vendor?: mongoose.Types.ObjectId | null;
   stock: number;
   sku: string;
+  brand?: string;
+  currency: string;
+  availabilityStatus: 'in_stock' | 'out_of_stock' | 'preorder';
   reviews: mongoose.Types.ObjectId[];
   avgRating: number;
   numReviews: number;
@@ -47,11 +49,7 @@ const ProductSchema: Schema = new Schema(
       },
     ],
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
-    vendor: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
-    },
+    vendor: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     tags: [String],
     variants: [
       {
@@ -59,9 +57,16 @@ const ProductSchema: Schema = new Schema(
         options: [String],
       },
     ],
-    vendor: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     stock: { type: Number, default: 0 },
     sku: { type: String, required: true, unique: true },
+    brand: { type: String },
+    currency: { type: String, default: 'INR', required: true },
+    availabilityStatus: {
+      type: String,
+      enum: ['in_stock', 'out_of_stock', 'preorder'],
+      default: 'in_stock',
+      required: true,
+    },
     reviews: [{ type: Schema.Types.ObjectId, ref: 'Review' }],
     avgRating: { type: Number, default: 0 },
     numReviews: { type: Number, default: 0 },
