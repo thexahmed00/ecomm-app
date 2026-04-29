@@ -44,7 +44,7 @@ export default function Page() {
       const token = await auth.currentUser?.getIdToken();
       if (token) {
         const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-        document.cookie = `firebaseToken=${token}; path=/; max-age=3600; SameSite=Lax${secure}`;
+        document.cookie = `firebaseToken=${token}; path=/vendor/dashboard; max-age=3600; SameSite=Lax${secure}`;
       }
 
       // Sync Firebase user to MongoDB first — vendor registration depends on this

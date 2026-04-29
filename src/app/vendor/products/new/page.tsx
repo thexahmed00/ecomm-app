@@ -8,13 +8,7 @@ import { useUIStore } from '@/store/uiStore';
 import ImageUploader from '@/components/ImageUploader';
 import type { CloudinaryImage } from '@/types';
 import { z } from 'zod';
-
-type Category = {
-  _id: string;
-  name: string;
-  slug: string;
-  parentCategory?: string | null;
-};
+import { PARENT_CATEGORIES, getSubcategories, type CategoryItem } from '@/lib/categories';
 
 const vendorProductSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -39,11 +33,7 @@ export default function AddProductPage() {
   const { addToast } = useUIStore();
   const router = useRouter();
 
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
-  const [parentCategories, setParentCategories] = useState<Category[]>([]);
-  const [subcategories, setSubcategories] = useState<Category[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [categoriesError, setCategoriesError] = useState(false);
+  const [subcategories, setSubcategories] = useState<CategoryItem[]>([]);
   const [images, setImages] = useState<CloudinaryImage[]>([]);
   const [skuError, setSkuError] = useState<string | null>(null);
 
@@ -53,17 +43,6 @@ export default function AddProductPage() {
       router.push('/');
     }
   }, [mongoUser, router]);
-
-  useEffect(() => {
-    fetch('/api/categories')
-      .then((r) => r.json())
-      .then((data: Category[]) => {
-        setAllCategories(data);
-        setParentCategories(data.filter((c) => !c.parentCategory));
-        setCategoriesLoading(false);
-      })
-      .catch(() => { setCategoriesError(true); setCategoriesLoading(false); });
-  }, []);
 
   const form = useForm({
     defaultValues: {
@@ -127,11 +106,8 @@ export default function AddProductPage() {
     },
   });
 
-  const handleCategoryChange = (parentId: string) => {
-    const children = allCategories.filter(
-      (c) => c.parentCategory && String(c.parentCategory) === parentId
-    );
-    setSubcategories(children);
+  const handleCategoryChange = (parentSlug: string) => {
+    setSubcategories(getSubcategories(parentSlug));
     form.setFieldValue('subcategory', '');
   };
 
@@ -170,7 +146,7 @@ export default function AddProductPage() {
         >
           {/* Section 1: Basic Info */}
           <div className="space-y-6">
-            <p className="text-xs tracking-[0.24em] uppercase text-[#7f7663] border-b border-[#d0c5af] pb-2">Basic Info</p>
+            <p className="text-sm font-bold tracking-[0.24em] uppercase text-[#7f7663]  pb-2">Basic Info</p>
 
             <form.Field
               name="name"
@@ -233,7 +209,7 @@ export default function AddProductPage() {
 
           {/* Section 2: Pricing */}
           <div className="space-y-6">
-            <p className="text-xs tracking-[0.24em] uppercase text-[#7f7663] border-b border-[#d0c5af] pb-2">Pricing</p>
+            <p className="text-sm font-bold tracking-[0.24em] uppercase text-[#7f7663]  pb-2">Pricing</p>
 
             <div className="grid grid-cols-2 gap-6">
               <form.Field
@@ -301,7 +277,7 @@ export default function AddProductPage() {
 
           {/* Section 3: Inventory */}
           <div className="space-y-6">
-            <p className="text-xs tracking-[0.24em] uppercase text-[#7f7663] border-b border-[#d0c5af] pb-2">Inventory</p>
+            <p className="text-sm font-bold tracking-[0.24em] uppercase text-[#7f7663]  pb-2">Inventory</p>
 
             <div className="grid grid-cols-2 gap-6">
               <form.Field
@@ -392,11 +368,7 @@ export default function AddProductPage() {
 
           {/* Section 4: Category */}
           <div className="space-y-6">
-            <p className="text-xs tracking-[0.24em] uppercase text-[#7f7663] border-b border-[#d0c5af] pb-2">Category</p>
-
-            {categoriesError && (
-              <p className={errorClass}>Failed to load categories. Please refresh.</p>
-            )}
+            <p className="text-sm font-bold tracking-[0.24em] uppercase text-[#7f7663] pb-2">Category</p>
 
             <form.Field
               name="category"
@@ -408,7 +380,6 @@ export default function AddProductPage() {
                   <select
                     className={inputClass}
                     value={field.state.value}
-                    disabled={categoriesError || categoriesLoading}
                     onBlur={field.handleBlur}
                     onChange={(e) => {
                       field.handleChange(e.target.value);
@@ -416,8 +387,8 @@ export default function AddProductPage() {
                     }}
                   >
                     <option value="">Select category</option>
-                    {parentCategories.map((c) => (
-                      <option key={c._id} value={c._id}>
+                    {PARENT_CATEGORIES.map((c) => (
+                      <option key={c.slug} value={c.slug}>
                         {c.name}
                       </option>
                     ))}
@@ -441,7 +412,7 @@ export default function AddProductPage() {
                     >
                       <option value="">None</option>
                       {subcategories.map((c) => (
-                        <option key={c._id} value={c._id}>
+                        <option key={c.slug} value={c.slug}>
                           {c.name}
                         </option>
                       ))}
