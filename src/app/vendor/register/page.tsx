@@ -22,9 +22,7 @@ export default function Page() {
   useEffect(() => {
     if (mongoUser?.role === 'vendor') {
       router.push('/vendor/dashboard');
-    } else if (firebaseUser || mongoUser) {
-      router.push('/');
-    }
+    } 
   }, [firebaseUser, mongoUser, router]);
 
   const handleStoreNameChange = (val: string) => {
