@@ -5,14 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import { auth } from '@/lib/firebase';
-
-interface VendorProfile {
-  storeName: string;
-  storeSlug: string;
-  bio: string;
-  totalEarnings: number;
-  pendingPayout: number;
-}
+import { useVendorStore } from '@/store/vendorStore';
 
 interface Product {
   _id: string;
@@ -35,7 +28,7 @@ async function fetchWithAuth(url: string) {
 export default function VendorDashboard() {
   const { mongoUser, firebaseUser } = useAuthStore();
   const router = useRouter();
-  const [profile, setProfile] = useState<VendorProfile | null>(null);
+  const { vendorProfile } = useVendorStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,14 +43,8 @@ export default function VendorDashboard() {
 
   useEffect(() => {
     if (!firebaseUser) return;
-    Promise.all([
-      fetchWithAuth('/api/vendor/profile'),
-      fetchWithAuth('/api/vendor/products'),
-    ])
-      .then(([profileData, productsData]) => {
-        setProfile(profileData.profile);
-        setProducts(productsData.products);
-      })
+    fetchWithAuth('/api/vendor/products')
+      .then((data) => setProducts(data.products))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [firebaseUser]);
@@ -80,8 +67,8 @@ export default function VendorDashboard() {
       {/* Store header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{profile?.storeName}</h1>
-          <p className="text-sm text-gray-500">/{profile?.storeSlug}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{vendorProfile?.storeName}</h1>
+          <p className="text-sm text-gray-500">/{vendorProfile?.storeSlug}</p>
         </div>
         <Link
           href="/vendor/products/new"
@@ -95,8 +82,8 @@ export default function VendorDashboard() {
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: 'Products', value: products.length },
-          { label: 'Total Earnings', value: `$${profile?.totalEarnings.toFixed(2)}` },
-          { label: 'Pending Payout', value: `$${profile?.pendingPayout.toFixed(2)}` },
+          { label: 'Total Earnings', value: `$${(vendorProfile?.totalEarnings ?? 0).toFixed(2)}` },
+          { label: 'Pending Payout', value: `$${(vendorProfile?.pendingPayout ?? 0).toFixed(2)}` },
         ].map(({ label, value }) => (
           <div key={label} className="bg-white border border-gray-200 rounded-xl p-5">
             <p className="text-sm text-gray-500">{label}</p>
