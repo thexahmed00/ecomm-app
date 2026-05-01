@@ -6,6 +6,7 @@ interface AuthState {
   firebaseUser: FirebaseUser | null;
   mongoUser: MongoUser | null;
   isAdmin: boolean;
+  isVendor: boolean;
   loading: boolean;
   setUser: (firebaseUser: FirebaseUser | null, mongoUser: MongoUser | null) => void;
   clearUser: () => void;
@@ -16,13 +17,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   firebaseUser: null,
   mongoUser: null,
   isAdmin: false,
+  isVendor: false,
   loading: true,
   setUser: (firebaseUser, mongoUser) => 
     set({ 
       firebaseUser, 
       mongoUser, 
-      isAdmin: mongoUser?.role === 'admin' 
+      isAdmin: mongoUser?.role === 'admin',
+      isVendor: mongoUser?.role === 'vendor'
     }),
-  clearUser: () => set({ firebaseUser: null, mongoUser: null, isAdmin: false }),
+  clearUser: () => set({ firebaseUser: null, mongoUser: null, isAdmin: false, isVendor: false }),
   setLoading: (loading) => set({ loading }),
 }));
